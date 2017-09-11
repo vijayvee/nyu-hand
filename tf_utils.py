@@ -67,7 +67,7 @@ def Linear(input,output_dim,name,dropout=False,dropout_prob=None,act='relu'):
     :param name: Name of the linear layer.
     """
     if len(input.get_shape())!=2:
-        n = input.get_shape()
+        n = input.get_shape().as_list()[0]
         input = tf.reshape(input,[n,-1])
     with tf.variable_scope(name):
         W,b = weight_bias_variable_linear(input.get_shape().as_list(),output_dim,name)
