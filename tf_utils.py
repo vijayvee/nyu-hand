@@ -35,19 +35,22 @@ def weight_bias_variable_linear(input_shape,output_dim,name):
                     initializer=tf.contrib.layers.xavier_initializer())
     return W,b
 
-def conv2d(input,k_size,output_dim,name):
+def conv2d(input,k_size,output_dim,name,is_training=True):
     """
     Function to perform a convolution operation on 'input'.
     :param input: Input to perform conv on
     :param k_size: Size of conv kernel
     :param output_dim: Number of conv kernels to be used
     :param name: Name of the current conv layer
+    :param is_training: Training flag for batch normalization
     """
     with tf.variable_scope(name):
         W,b = weight_bias_variable(input.get_shape().as_list(),output_dim,name)
         x = tf.nn.conv2d(input,W,strides=[1,1,1,1],padding='SAME')
-        out = tf.nn.relu(tf.nn.bias_add(x,b))
-        return out
+        out = tf.nn.bias_add(x,b)
+        if is_training:
+            out = tf.contrib.layers.batch_norm(out,is_training=is_training)
+        return tf.nn.relu(out)
 
 def max_pool(input,name):
     """
@@ -59,7 +62,7 @@ def max_pool(input,name):
         out = tf.nn.max_pool(input,ksize=[1,2,2,1],padding='SAME',strides=[1,2,2,1])
         return out
 
-def Linear(input,output_dim,name,dropout=False,dropout_prob=None,act='relu'):
+def Linear(input,output_dim,name,dropout=False,dropout_prob=None,act='relu',is_training=True):
     """
     Function to perform a linear transformation of 'input'.
     :param input: Input to perform linear transformation on.
@@ -72,6 +75,8 @@ def Linear(input,output_dim,name,dropout=False,dropout_prob=None,act='relu'):
     with tf.variable_scope(name):
         W,b = weight_bias_variable_linear(input.get_shape().as_list(),output_dim,name)
         out = tf.nn.xw_plus_b(input,W,b)
+        if is_training:
+            out = tf.contrib.layers.batch_norm(out,is_training=is_training)
         if act == 'relu':
             out = tf.nn.relu(out)
         else:
